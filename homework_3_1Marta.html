@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analisi Payoff Opzioni</title>
+  <style>
+    body {
+      font-family: Verdana, sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    .canvas-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      justify-content: center;
+      padding: 20px;
+    }
+    canvas {
+      border: 2px solid #555;
+      background: white;
+    }
+    .controls {
+      margin: 15px;
+      padding: 10px;
+      background: white;
+      display: inline-block;
+      border-radius: 8px;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+    }
+    .slider-label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Analisi Grafica del Payoff</h1>
+  
+  <div class="controls">
+    <label class="slider-label">Strike Price:</label>
+    <input type="range" id="strikeSlider" min="50" max="150" value="100">
+    <span id="strikeValue">100</span> €
+  </div>
+
+  <div class="controls">
+    <label class="slider-label">Premium:</label>
+    <input type="range" id="premiumSlider" min="0" max="50" value="10">
+    <span id="premiumValue">10</span> €
+  </div>
+
+  <div class="canvas-container">
+    <div>
+      <h3 style="color: navy;">Call Long</h3>
+      <canvas id="callLongCanvas" width="400" height="300"></canvas>
+    </div>
+    <div>
+      <h3 style="color: maroon;">Call Short</h3>
+      <canvas id="callShortCanvas" width="400" height="300"></canvas>
+    </div>
+    <div>
+      <h3 style="color: darkgreen;">Put Long</h3>
+      <canvas id="putLongCanvas" width="400" height="300"></canvas>
+    </div>
+    <div>
+      <h3 style="color: darkorange;">Put Short</h3>
+      <canvas id="putShortCanvas" width="400" height="300"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const strikeSlider = document.getElementById("strikeSlider");
+    const strikeValue = document.getElementById("strikeValue");
+    const premiumSlider = document.getElementById("premiumSlider");
+    const premiumValue = document.getElementById("premiumValue");
+    
+    const canvases = {
+      callLong: document.getElementById("callLongCanvas"),
+      callShort: document.getElementById("callShortCanvas"),
+      putLong: document.getElementById("putLongCanvas"),
+      putShort: document.getElementById("putShortCanvas"),
+    };
+
+    let strikePrice = parseInt(strikeSlider.value);
+    let premium = parseInt(premiumSlider.value);
+
+    function drawChart(canvas, payoffFunction, color) {
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const originX = 40;
+      const originY = canvas.height / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(originX, 0);
+      ctx.lineTo(originX, canvas.height);
+      ctx.moveTo(0, originY);
+      ctx.lineTo(canvas.width, originY);
+      ctx.strokeStyle = "black";
+      ctx.stroke();
+
+      ctx.font = "12px Arial";
+      ctx.fillText("Prezzo (S)", canvas.width / 2, canvas.height - 10);
+      ctx.fillText("Profitto/Perdita", 5, canvas.height / 2 - 10);
+
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+
+      for (let S = 50; S <= 150; S++) {
+        const x = originX + (S - 50) * 3;
+        const y = originY - payoffFunction(S) * 2;
+
+        if (S === 50) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+
+      ctx.stroke();
+    }
+
+    function updateCharts() {
+      strikePrice = parseInt(strikeSlider.value);
+      premium = parseInt(premiumSlider.value);
+
+      strikeValue.textContent = strikePrice;
+      premiumValue.textContent = premium;
+
+      drawChart(canvases.callLong, (S) => Math.max(S - strikePrice, 0) - premium, "navy");
+      drawChart(canvases.callShort, (S) => -(Math.max(S - strikePrice, 0) - premium), "maroon");
+      drawChart(canvases.putLong, (S) => Math.max(strikePrice - S, 0) - premium, "darkgreen");
+      drawChart(canvases.putShort, (S) => -(Math.max(strikePrice - S, 0) - premium), "darkorange");
+    }
+
+    strikeSlider.addEventListener("input", updateCharts);
+    premiumSlider.addEventListener("input", updateCharts);
+
+    updateCharts();
+  </script>
+</body>
+</html>
